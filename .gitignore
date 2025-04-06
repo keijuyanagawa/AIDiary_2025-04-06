@@ -1,0 +1,21 @@
+# 環境変数ファイル (APIキーなど)
+.env
+
+# SQLite データベースファイル
+diary_app.db
+*.db-journal
+
+# Pythonキャッシュファイル
+__pycache__/
+*.py[cod]
+
+# Streamlit 設定 (もしあれば)
+.streamlit/
+
+# IDE/エディタ設定 (任意)
+.vscode/
+.idea/
+
+# OS固有ファイル (任意)
+.DS_Store
+Thumbs.db 

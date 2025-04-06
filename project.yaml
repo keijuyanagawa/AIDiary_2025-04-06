@@ -1,0 +1,86 @@
+app_name: AIチャット日記アプリ
+description: >
+  言語化が苦手な人でも、AIとのチャットを通じて自然に日記が書ける。
+  要約と感情分析を行い、感情の変化を時系列グラフで可視化。
+  過去の日記の振り返りも可能。
+  StreamlitでWebアプリとして動作し、Gemini 1.5 Flashを使用する。
+
+tech_stack:
+  frontend: Streamlit
+  backend: Python
+  database: SQLite
+  ai_model: Google Gemini 1.5 Flash (via google.generativeai)
+  deployment: Streamlit Cloud (想定)
+  auth: カスタムログイン（ユーザー名＋ハッシュ化パスワード）
+  visualization: Matplotlib (via Streamlit)
+  data_handling: Pandas
+
+features:
+  - ユーザーログイン機能（認証あり） # ユーザー登録機能は今回スコープ外
+  - チャット形式で日記を入力（AIが質問をリード）
+  - Geminiで要約と感情分析（5分類: 喜び, 怒り, 悲しみ, 不安, 安堵）
+  - 日記データ（チャットログ、要約、感情スコア）をSQLiteに保存
+  - 感情分析スコアを時系列の折れ線グラフで表示
+  - 保存された過去の日記を日付で選択し、詳細（要約、感情スコア、チャットログ）を閲覧
+  - 新規日記作成モードと過去日記閲覧モードをサイドバーで切り替え
+
+database_schema:
+  users:
+    - id: INTEGER, PRIMARY KEY, AUTOINCREMENT
+    - username: TEXT, UNIQUE, NOT NULL
+    - password_hash: TEXT, NOT NULL
+    - created_at: DATETIME, DEFAULT CURRENT_TIMESTAMP
+  entries:
+    - id: INTEGER, PRIMARY KEY, AUTOINCREMENT
+    - user_id: INTEGER, NOT NULL, FOREIGN KEY → users.id
+    - entry_date: DATE, NOT NULL
+    - chat_log: TEXT, NOT NULL
+    - summary: TEXT
+    - created_at: DATETIME, DEFAULT CURRENT_TIMESTAMP
+  emotions:
+    - id: INTEGER, PRIMARY KEY, AUTOINCREMENT
+    - entry_id: INTEGER, NOT NULL, FOREIGN KEY → entries.id
+    - joy: INTEGER, DEFAULT 0 # 0〜100
+    - anger: INTEGER, DEFAULT 0 # 0〜100
+    - sadness: INTEGER, DEFAULT 0 # 0〜100
+    - anxiety: INTEGER, DEFAULT 0 # 0〜100
+    - relief: INTEGER, DEFAULT 0 # 0〜100
+    - created_at: DATETIME, DEFAULT CURRENT_TIMESTAMP
+
+files:
+  - .env: GEMINI_API_KEYを格納
+  - init_db.py: SQLite初期化スクリプト（テーブル作成）
+  - app.py: Streamlit本体、ログイン画面、メインUI（チャット、日記表示、グラフ）
+  - auth.py: 認証処理（パスワードハッシュ照合）
+  - db.py: DB接続やデータ操作ヘルパー関数群
+  - gemini_chat.py: GeminiとのAPI接続＆応答処理（チャット、分析）
+  - requirements.txt: 必要なPythonライブラリリスト
+
+chat_flow: # 新規日記作成フロー
+  - ログイン後、「新しい日記を書く」モードで開始。
+  - AIが「今日はどんな1日だった？」などの問いかけでスタート。
+  - ユーザーが入力するたびに、Geminiが自然な流れで会話を継続。
+  - ユーザーが「会話を終了して日記を保存する」ボタンをクリック。
+  - Geminiがチャットログ全体を基に要約・感情分析（5分類スコア）を実行。
+  - 分析結果（要約、感情スコア）とチャットログ全文をSQLiteのentries, emotionsテーブルに保存。
+  - 保存完了メッセージと分析結果を表示。
+  - チャット履歴がクリアされ、新しい日記を作成できる状態になる。
+  - ページがリロードされ、サイドバーの日記リストが更新される。
+
+view_flow: # 過去日記閲覧フロー
+  - ログイン後、サイドバーのセレクトボックスに過去の日記リスト（日付）が表示される。
+  - ユーザーが特定の日付の日記を選択。
+  - メインエリアに選択された日記の詳細情報が表示される。
+    - 日付、AIによる要約、感情スコア（メトリクス表示）、チャットログ（折りたたみ表示）。
+  - ユーザーは他の日記を選択するか、「新しい日記を書く」を選択してモードを切り替える。
+  - 感情推移グラフは常に表示され、全期間のデータがプロットされる。
+
+next_steps: # 今後の改善・拡張案
+  - Geminiプロンプトの最適化（分析精度向上、安定性向上）。
+  - UI/UXの改善（デザイン調整、操作性向上、レスポンシブ対応など）。
+  - Streamlit Cloudへのデプロイ手順の確立と実行。
+    - SQLiteの永続性問題への対応検討（必要であれば外部DBサービスの利用）。
+  - エラーハンドリングの強化（より詳細なエラー表示、ログ記録）。
+  - 日記編集・削除機能の追加（任意）。
+  - 感情グラフのカスタマイズ機能（期間指定、表示感情選択など）。
+  - テストコードの作成（ユニットテスト、結合テスト）。
