@@ -7,6 +7,22 @@ from datetime import date
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import os
+import init_db # init_db.py をインポート
+import add_dummy_data # add_dummy_data.py をインポート
+
+# --- データベース初期化処理 (起動時に実行) ---
+if not os.path.exists(db.DB_NAME):
+    print(f"データベースファイル '{db.DB_NAME}' が見つからないため、初期化とダミーデータの追加を行います。")
+    try:
+        init_db.initialize_database() # データベースと初期ユーザーを作成
+        add_dummy_data.add_initial_dummy_data() # ダミーデータを追加
+        print("データベースの初期化とダミーデータの追加が完了しました。")
+    except Exception as e:
+        print(f"データベース初期化またはダミーデータ追加中にエラーが発生しました: {e}")
+        # エラーが発生した場合、アプリの動作に影響が出る可能性があることをユーザーに知らせる
+        st.error("アプリケーションの初期設定中にエラーが発生しました。機能が制限される可能性があります。")
+# --- 初期化処理ここまで ---
 
 # --- セッション状態の初期化 ---
 required_keys = {
